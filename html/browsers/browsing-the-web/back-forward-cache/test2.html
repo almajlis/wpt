@@ -1,0 +1,44 @@
+<!doctype html>
+<meta name="timeout" content="long">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="resources/helper.js"></script>
+<script>
+const localStoragePrefix = 'BFCache.test.';
+
+const t = async_test();
+
+var statusss = [];
+
+t.step_timeout(() => {
+  assert_array_equals(statusss, []);
+  t.unreached_func("fox")();
+}, 5000);
+
+clearData();
+
+statusss.push('a');
+
+window.open('resources/events.sub.html', '_blank', 'noopener');
+
+statusss.push('b');
+
+setInterval(t.step_func(() => {
+    const result = getData('result');
+    statusss.push(JSON.stringify(dumpData()));
+    if (result) {
+      assert_array_equals(JSON.parse(result), [
+          'window.pagehide.persisted',
+          'document.visibilitychange',
+          'window.visibilitychange',
+          // document.freeze/resume are not fired on Firefox.
+          // 'document.freeze',
+          // 'document.resume',
+          'document.visibilitychange',
+          'window.visibilitychange',
+          'window.pageshow.persisted']);
+      t.done();
+    }
+  }),
+  500);
+</script>
